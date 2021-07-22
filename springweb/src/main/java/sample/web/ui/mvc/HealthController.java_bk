@@ -1,0 +1,29 @@
+package sample.web.ui.mvc;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HealthController {
+
+	@GetMapping("/health")
+	public String index() {
+		return "Health Status: Good";
+	}
+
+	@GetMapping("/health2")
+	public EmployeeListVO getAllEmployees()
+    	{
+        	EmployeeListVO employees = new EmployeeListVO();
+          
+        	EmployeeVO empOne = new EmployeeVO(1,"Lokesh","Gupta","howtodoinjava@gmail.com");
+        	EmployeeVO empTwo = new EmployeeVO(2,"Amit","Singhal","asinghal@yahoo.com");
+        	EmployeeVO empThree = new EmployeeVO(3,"Kirti","Mishra","kmishra@gmail.com");
+          
+          
+        	employees.getEmployees().add(empOne);
+        	employees.getEmployees().add(empTwo);
+        	employees.getEmployees().add(empThree);
+        	return employees;
+    	}
+}
