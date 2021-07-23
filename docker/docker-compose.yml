@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+#    volumes:
+#      - /var/run/docker.sock:/tmp/docker.sock:ro
+#      - ../logs/nginx/:/var/log/nginx
+    environment:   
+      - DEFAULT_HOST=webapp.local 
+    ports:
+      - "80:80"
+#    networks:
+#      - devopsnet
+    stdin_open: true    # docker run -i
+    tty: true           # docker run -t    
+
+  app:
+    image: springbootapp:1.0
+#    user: root
+#    ports:
+#      - "8080:8080"
+    volumes:
+      - ./../springweb:/home/springweb    
+    environment:
+      - VIRTUAL_HOST=webapp.local
+#    networks:
+#      - devopsnet
+    stdin_open: true    # docker run -i
+    tty: true           # docker run -t
