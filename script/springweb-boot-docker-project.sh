@@ -4,13 +4,13 @@ APP_NAME="app-01"
 
 function docker-image-build()
 {
-    echo "docker-image-build"
+    echo "======docker-image-build========"
     docker build --tag springbootapp:1.0 . -f docker/Dockerfile
 }
 
 function springboot-src-build()
 {
-    echo "springboot-src-build"
+    echo "======springboot-src-build======"
     start-app
     docker exec -it ${APP_NAME} bash -c "cd /home/springweb/ && ./gradlew build"
     stop-app 
@@ -18,13 +18,13 @@ function springboot-src-build()
 
 function start-app()
 {
-    echo "start-app"
+    echo "======start-app======"
     docker run -it --name ${APP_NAME} -d --rm -p 8080:8080 -v $(pwd)/springweb:/home/springweb springbootapp:1.0
 }
 
 function stop-app()
 {
-    echo "stop-app"
+    echo "======stop-app======"
     docker stop app-01
 }
 
