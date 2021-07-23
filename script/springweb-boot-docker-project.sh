@@ -13,9 +13,9 @@ function springboot-src-build()
   docker stop ${BUILD_APP_NAME}
 }
 
+## app image build
 function springboot-app-build()
 {
-  ## app image build
   docker build --tag springbootwebapp:1.0 . -f docker/Dockerfile 
 }
 
