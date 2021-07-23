@@ -1,0 +1,15 @@
+FROM openjdk:16
+
+RUN microdnf install wget unzip 
+
+## gradle
+### install gradle
+RUN wget https://services.gradle.org/distributions/gradle-7.1-bin.zip -P /tmp
+RUN cd /tmp && unzip gradle-7.1-bin.zip
+RUN mkdir -p /opt/gradle /home/springweb
+RUN mv /tmp/gradle-7.1 /opt/gradle/
+### setting
+ENV GRADLE_HOME /opt/gradle/gradle-7.1
+ENV PATH ${GRADLE_HOME}/bin:${PATH}
+
+CMD ["/bin/bash"]

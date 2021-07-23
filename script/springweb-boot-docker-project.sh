@@ -1,31 +1,34 @@
 #!/bin/bash
 
+BUILD_APP_NAME="build-app"
 APP_NAME="app-01"
 
-function docker-image-build()
-{
-    echo "======docker-image-build========"
-    docker build --tag springbootapp:1.0 . -f docker/Dockerfile
-}
-
+## src build
 function springboot-src-build()
 {
-    echo "======springboot-src-build======"
-    start-app
-    docker exec -it ${APP_NAME} bash -c "cd /home/springweb/ && ./gradlew build"
-    stop-app 
+  echo "======springboot-src-build======"
+  docker build --tag springbootbuildapp:1.0 . -f docker/Dockerfile_Build
+  docker run -it --name ${BUILD_APP_NAME} -d --rm -v $(pwd)/springweb:/home/springweb springbootbuildapp:1.0
+  docker exec -it ${BUILD_APP_NAME} bash -c "cd /home/springweb/ && ./gradlew build"
+  docker stop ${BUILD_APP_NAME}
+}
+
+function springboot-app-build()
+{
+  ## app image build
+  docker build --tag springbootwebapp:1.0 . -f docker/Dockerfile 
 }
 
 function start-app()
 {
     echo "======start-app======"
-    docker run -it --name ${APP_NAME} -d --rm -p 8080:8080 -v $(pwd)/springweb:/home/springweb springbootapp:1.0
+    docker run -it --name ${APP_NAME} -d --rm -p 8080:8080 springbootwebapp:1.0
 }
 
 function stop-app()
 {
     echo "======stop-app======"
-    docker stop app-01
+    docker stop ${APP_NAME}
 }
 
 #=====================================
@@ -40,16 +43,10 @@ function stop()
     stop-app
 }
 
-function restart()
-{
-    stop
-    start
-}
-
 function deploy()
 {
-    docker-image-build
-    springboot-src-build
+  springboot-src-build
+  springboot-app-build  
 }
 
 function status()
@@ -65,7 +62,8 @@ case "$1" in
     stop
     ;;
   restart)
-    restart
+    stop
+    start
     ;;
   status)
     status
