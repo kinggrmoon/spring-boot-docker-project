@@ -1,31 +1,42 @@
 version: '3'
 
 services:
-  proxy:
+  nginx_proxy:
     image: jwilder/nginx-proxy
-    container_name: nginx-proxy
-#    volumes:
-#      - /var/run/docker.sock:/tmp/docker.sock:ro
+    user: root
+#    container_name: nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
 #      - ../logs/nginx/:/var/log/nginx
-    environment:   
-      - DEFAULT_HOST=webapp.local 
+#    environment:   
+#      - DEFAULT_HOST=webapp.local 
     ports:
       - "80:80"
-#    networks:
-#      - devopsnet
+    networks:
+      appnetwork:
     stdin_open: true    # docker run -i
     tty: true           # docker run -t    
 
   app:
-    image: springbootapp:1.0
+    image: springbootwebapp:1.0
 #    user: root
 #    ports:
-#      - "8080:8080"
-    volumes:
-      - ./../springweb:/home/springweb    
-    environment:
-      - VIRTUAL_HOST=webapp.local
-#    networks:
-#      - devopsnet
+#      - "8080:8080" 
+#    environment:
+#      - VIRTUAL_HOST=webapp.local
+    scale: 3
     stdin_open: true    # docker run -i
     tty: true           # docker run -t
+    networks:
+      appnetwork:
+ 
+networks:
+  appnetwork:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+    ipam:
+      config:
+        - subnet: 172.10.10.0/24
+        - gateway: "172.10.10.1"
