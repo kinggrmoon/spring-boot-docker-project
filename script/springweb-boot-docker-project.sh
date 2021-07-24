@@ -23,32 +23,42 @@ function springboot-app-build()
   docker build --tag springbootwebapp:1.0 . -f docker/Dockerfile 
 }
 
+function check_docker_ps()
+{
+  docker ps | grep ${PROJECT}_group | awk '{print $1}' > ${PWD}/RunContainerID
+  docker ps | grep ${PROJECT}_group | awk -F"tcp" '{print $2}' > ${PWD}/RunContainerName
+  sed -i '' 's/^ *//' ${PWD}/RunContainerName
+}
+
+function nginx_reload()
+{
+  sed -i '' "/server ${PROJECT}_/d" nginx/nginx.conf
+  while read name; do 
+    sed -i '' "s,RunServer,RunServer\nserver ${name}:8080;,g" ${PWD}/nginx/nginx.conf
+  done < ${PWD}/RunContainerName
+
+  docker exec -it ${PROJECT}_nginx_proxy_1 bash -c "nginx -s reload"
+}
+
 function start()
 {
     echo "======start======"
 
     echo "step1: source build"
-    springboot-src-build
+    #springboot-src-build
 
     echo "step2: docker image build"
-    springboot-app-build
+    #springboot-app-build
    
     echo "step3: start containers"
     #docker run -it --name ${APP_NAME} -d --rm -p 8080:8080 springbootwebapp:1.0
     docker-compose -p ${PROJECT} -f docker/docker-compose.yml up -d
     #docker ps | grep ${PROJECT}_group | awk '{print $1}' | awk " NR > 1" > ${PWD}/RunContainerID
     #docker ps | grep ${PROJECT}_nginx | awk '{print $1" "$14}' > ${PWD}/RunContainerID-Name
-    docker ps | grep ${PROJECT}_group | awk '{print $1}' > ${PWD}/RunContainerID
-    docker ps | grep ${PROJECT}_group | awk -F"tcp" '{print $2}' > ${PWD}/RunContainerName
-    sed -i '' 's/^ *//' ${PWD}/RunContainerName
+    check_docker_ps
 
     echo "step4: nginx config update && reload"
-    sed -i '' "/server ${PROJECT}_/d" nginx/nginx.conf
-    while read name; do 
-      sed -i '' "s,RunServer,RunServer\nserver ${name}:8080;,g" ${PWD}/nginx/nginx.conf
-    done < ${PWD}/RunContainerName
-
-    docker exec -it ${PROJECT}_nginx_proxy_1 bash -c "nginx -s reload"
+    nginx_reload
 }
 
 function stop()
@@ -57,13 +67,30 @@ function stop()
     docker-compose -p ${PROJECT} -f docker/docker-compose.yml stop
     docker-compose -p ${PROJECT} -f docker/docker-compose.yml rm -f
     docker network prune -f
-    rm -rf ${PWD}/RunContainerID ${PWD}/RunContainerName 
+    rm -rf ${PWD}/RunContainerID ${PWD}/RunContainerName
 }
 
 function deploy()
 {
+  echo "step1: source build"
   springboot-src-build
-  springboot-app-build  
+
+  echo "step2: docker image build"
+  springboot-app-build
+
+  echo "step3: new app start"
+  RunContainerCount=$(cat ${PWD}/RunContainerID | wc -l)
+  docker-compose -p ${PROJECT} -f docker/docker-compose.yml up -d --scale group01_app=$((${RunContainerCount}+2))
+  nginx_reload
+ 
+  while read containerid; do
+    docker stop ${containerid}
+    docker rm ${containerid}
+    sleep 30s
+  done < ${PWD}/RunContainerID
+
+  check_docker_ps
+  nginx_reload  
 }
 
 function status()
@@ -81,24 +108,22 @@ function scaleout()
     
     echo "step2: scaleout"
     docker-compose -p ${PROJECT} -f docker/docker-compose.yml up -d --scale group01_app=$((${RunContainerCount}+1))
-    docker ps | grep ${PROJECT}_group | awk '{print $1}' > ${PWD}/RunContainerID
-    docker ps | grep ${PROJECT}_group | awk -F"tcp" '{print $2}' > ${PWD}/RunContainerName
-    sed -i '' 's/^ *//' ${PWD}/RunContainerName
+    check_docker_ps
     
     echo "step3: nginx config update && reload"
-    sed -i '' "/server ${PROJECT}_/d" nginx/nginx.conf
-    
-    while read name; do 
-      sed -i '' "s,RunServer,RunServer\nserver ${name}:8080;,g" nginx/nginx.conf
-    done < ${PWD}/RunContainerName
-
-    #sed -i '' "s,RunServer,RunServer\nserver ${PROJECT}_group01_app_add,g" nginx/nginx.conf  
-    docker exec -it ${PROJECT}_nginx_proxy_1 bash -c "nginx -s reload"
+    nginx_reload
 }
 
 function scalein()
 {
     echo "======scalein======"
+    docker stop $(cat ${PWD}/RunContainerID | tail -n 1)
+    docker rm $(cat ${PWD}/RunContainerID | tail -n 1)
+
+    check_docker_ps
+    
+    echo "step3: nginx config update && reload"
+    nginx_reload
 }
 
 case "$1" in
