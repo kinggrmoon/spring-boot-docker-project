@@ -4,12 +4,15 @@ BUILD_APP_NAME="build-app"
 APP_NAME="app-01"
 PROJECT="project"
 
+PWD=$(pwd)
+echo ${PWD}
+
 ## src build
 function springboot-src-build()
 {
   echo "======springboot-src-build======"
   docker build --tag springbootbuildapp:1.0 . -f docker/Dockerfile_Build
-  docker run -it --name ${BUILD_APP_NAME} -d --rm -v $(pwd)/springweb:/home/springweb springbootbuildapp:1.0
+  docker run -it --name ${BUILD_APP_NAME} -d --rm -v ${PWD}/springweb:/home/springweb springbootbuildapp:1.0
   docker exec -it ${BUILD_APP_NAME} bash -c "cd /home/springweb/ && ./gradlew build"
   docker stop ${BUILD_APP_NAME}
 }
@@ -25,10 +28,10 @@ function start()
     echo "======start======"
 
     echo "step1: source build"
-    #springboot-src-build
+    springboot-src-build
 
     echo "step2: docker image build"
-    #springboot-app-build
+    springboot-app-build
    
     echo "step3: start containers"
     #docker run -it --name ${APP_NAME} -d --rm -p 8080:8080 springbootwebapp:1.0
@@ -38,12 +41,11 @@ function start()
     docker ps | grep ${PROJECT}_group | awk '{print $1}' > ${PWD}/RunContainerID
     docker ps | grep ${PROJECT}_group | awk -F"tcp" '{print $2}' > ${PWD}/RunContainerName
     sed -i '' 's/^ *//' ${PWD}/RunContainerName
-    #cat ${PWD}/RunContainerID-Name
 
     echo "step4: nginx config update && reload"
     sed -i '' "/server ${PROJECT}_/d" nginx/nginx.conf
     while read name; do 
-      sed -i '' "s,RunServer,RunServer\nserver ${name}:8080;,g" nginx/nginx.conf
+      sed -i '' "s,RunServer,RunServer\nserver ${name}:8080;,g" ${PWD}/nginx/nginx.conf
     done < ${PWD}/RunContainerName
 
     docker exec -it ${PROJECT}_nginx_proxy_1 bash -c "nginx -s reload"
