@@ -17,26 +17,35 @@ services:
       appnetwork:
     stdin_open: true    # docker run -i
     tty: true           # docker run -t    
-
-  app:
+  
+  group01_app:
     image: springbootwebapp:1.0
 #    user: root
 #    ports:
 #      - "8080:8080" 
 #    environment:
 #      - VIRTUAL_HOST=webapp.local
-    scale: 3
+    scale: 2
     stdin_open: true    # docker run -i
     tty: true           # docker run -t
     networks:
       appnetwork:
- 
+
+#  group02_app:
+#    image: springbootwebapp:1.0
+#    scale: 1
+#    stdin_open: true    # docker run -i
+#    tty: true           # docker run -t
+#    networks:
+#      appnetwork: 
+
 networks:
   appnetwork:
-    driver: bridge
     driver_opts:
       com.docker.network.enable_ipv6: "false"
-    ipam:
-      config:
-        - subnet: 172.10.10.0/24
-        - gateway: "172.10.10.1"
+#    ipam:
+#      config:
+#        - subnet: 172.100.0.0/24
+#        - gateway: "172.100.0.1"
+  default:
+    driver: bridge
