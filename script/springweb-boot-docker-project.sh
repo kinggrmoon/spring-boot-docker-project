@@ -78,19 +78,32 @@ function deploy()
   echo "step2: docker image build"
   springboot-app-build
 
-  echo "step3: new app start"
-  RunContainerCount=$(cat ${PWD}/RunContainerID | wc -l)
-  docker-compose -p ${PROJECT} -f docker/docker-compose.yml up -d --scale group01_app=$((${RunContainerCount}+2))
+  echo "step3: new app start(new temp webapp add)"
+  docker run -it --name ${APP_NAME}-new01 --net ${PROJECT}_appnetwork -d --rm springbootwebapp:1.0
+  docker run -it --name ${APP_NAME}-new02 --net ${PROJECT}_appnetwork -d --rm springbootwebapp:1.0
+
+  sed -i '' "s,RunServer,RunServer\nserver ${APP_NAME}-new01:8080;,g" ${PWD}/nginx/nginx.conf
+  sed -i '' "s,RunServer,RunServer\nserver ${APP_NAME}-new02:8080;,g" ${PWD}/nginx/nginx.conf
   nginx_reload
  
+  echo "step4: new app start(old webapp stop)"
   while read containerid; do
     docker stop ${containerid}
     docker rm ${containerid}
     sleep 30s
   done < ${PWD}/RunContainerID
-
+  
+  echo "step5: new app start(new webapp scaleout)"
+  docker-compose -p ${PROJECT} -f docker/docker-compose.yml up -d --scale group01_app=2
   check_docker_ps
-  nginx_reload  
+  nginx_reload
+
+  echo "step6: new app start(new temp webapp stop)"
+  sleep 180s
+  docker stop ${APP_NAME}-new01 ${APP_NAME}-new02
+  sed -i '' "/server ${APP_NAME}-new01/d" nginx/nginx.conf
+  sed -i '' "/server ${APP_NAME}-new02/d" nginx/nginx.conf
+  nginx_reload
 }
 
 function status()
