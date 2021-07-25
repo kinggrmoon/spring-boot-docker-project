@@ -2,14 +2,13 @@
 
 
 ## Info
----
+
 - springboot 빌드 환경을 docker Centainer로 구성한다.
 - sprignboot의 소스 빌드는 gradle을 통해 빌드를 진행한다.
 - 프로젝트는 nginx의 LoadBalance(RB) 구성을 통해 고가용성을 유지 한다
 - 소스 업데이트시 무중단 배포를 구성한다.
 
 ## RUN Environment
----
 - HOST: Git, Docker, Docker-compose
 - Build Contaner, WEBAPP Contaner: 
   - oepnjdk:16
@@ -20,7 +19,6 @@
   
 
 ## Script Info
----
 > 소스코드 다운로드 및 Project 시작하기     
 
     $ git clone https://github.com/kinggrmoon/spring-boot-docker-project.git
@@ -41,7 +39,6 @@
 
 
 ## use commend
----
 
 ex>
 
