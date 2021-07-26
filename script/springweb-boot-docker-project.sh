@@ -68,6 +68,7 @@ function stop()
     docker-compose -p ${PROJECT} -f docker/docker-compose.yml rm -f
     docker network prune -f
     rm -rf ${PWD}/RunContainerID ${PWD}/RunContainerName
+    sed -i '' "/server ${PROJECT}_/d" nginx/nginx.conf
 }
 
 function deploy()
