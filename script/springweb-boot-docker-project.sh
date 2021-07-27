@@ -45,10 +45,10 @@ function start()
     echo "======start======"
 
     echo "step1: source build"
-    #springboot-src-build
+    springboot-src-build
 
     echo "step2: docker image build"
-    #springboot-app-build
+    springboot-app-build
    
     echo "step3: start containers"
     #docker run -it --name ${APP_NAME} -d --rm -p 8080:8080 springbootwebapp:1.0
